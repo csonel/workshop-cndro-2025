@@ -3,6 +3,13 @@
 ################################################################################
 locals {
   email_address = var.enable_budget ? var.email_address : null
+
+  notifications = [
+    for threshold in [10, 50, 80, 90, 92, 94, 96, 98, 100] : {
+      comparison_operator = "GREATER_THAN"
+      threshold           = threshold
+    }
+  ]
 }
 
 resource "aws_budgets_budget" "cost" {
@@ -14,12 +21,15 @@ resource "aws_budgets_budget" "cost" {
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
-  notification {
-    comparison_operator        = "GREATER_THAN"
-    notification_type          = "ACTUAL"
-    threshold                  = 10
-    threshold_type             = "PERCENTAGE"
-    subscriber_email_addresses = [local.email_address]
+  dynamic "notification" {
+    for_each = local.notifications
+    content {
+      comparison_operator        = notification.value.comparison_operator
+      notification_type          = "ACTUAL"
+      threshold                  = notification.value.threshold
+      threshold_type             = "PERCENTAGE"
+      subscriber_email_addresses = [local.email_address]
+    }
   }
 }
 
