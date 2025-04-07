@@ -61,6 +61,11 @@ data "http" "myip" {
   url = "http://ipv4.icanhazip.com"
 }
 
+resource "aws_key_pair" "eks_nodes_remote_access" {
+  key_name   = "cndro-key"
+  public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHTjIfMvcfzjx0VwBMLrqA6g6g/wKqVUj4dNsQgHuBE9"
+}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.31"
@@ -71,7 +76,7 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.public_subnets
 
-  cluster_endpoint_private_access      = false
+  cluster_endpoint_private_access      = true
   cluster_endpoint_public_access       = true
   cluster_endpoint_public_access_cidrs = ["${chomp(data.http.myip.response_body)}/32"]
 
@@ -88,8 +93,13 @@ module "eks" {
 
   # EKS Managed Node group(s)
   eks_managed_node_group_defaults = {
-    ami_type       = "AL2023_x86_64_STANDARD"
-    instance_types = ["t3.micro", "t2.micro"]
+    ami_type                   = "AL2023_x86_64_STANDARD"
+    instance_types             = ["t3.micro", "t2.micro"]
+    use_custom_launch_template = false
+
+    remote_access = {
+      ec2_ssh_key = aws_key_pair.eks_nodes_remote_access.key_name
+    }
 
     tags = {
       Name = "cndro-eks-nodes"
@@ -99,17 +109,17 @@ module "eks" {
   eks_managed_node_groups = {
     # Node group for x86_64 architecture
     eks_nodes = {
-      min_size         = 1
-      max_size         = 9
-      desired_capacity = 3
+      min_size     = 1
+      max_size     = 3
+      desired_size = 1
     }
     # Node group for ARM64 architecture
     # arm64_nodes = {
-    #   ami_type         = "AL2023_ARM_64_STANDARD"
-    #   instance_types   = ["t4g.micro", "t4g.small"]
-    #   min_size         = 1
-    #   max_size         = 3
-    #   desired_capacity = 1
+    #   ami_type       = "AL2023_ARM_64_STANDARD"
+    #   instance_types = ["t4g.micro", "t4g.small"]
+    #   min_size       = 1
+    #   max_size       = 3
+    #   desired_size   = 1
     # }
   }
 
