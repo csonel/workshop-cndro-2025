@@ -43,13 +43,9 @@ module "vpc" {
   name = "cndro"
   cidr = "10.0.0.0/22"
 
-  azs              = var.availability_zones
-  private_subnets  = var.private_subnets
-  database_subnets = var.database_subnets
-  public_subnets   = var.public_subnets
-
-  enable_nat_gateway = true
-  single_nat_gateway = true
+  azs                     = var.availability_zones
+  public_subnets          = var.public_subnets
+  map_public_ip_on_launch = true
 
   vpc_tags = {
     Name = "cndro-vpc"
@@ -69,18 +65,56 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.31"
 
-  cluster_name    = "cndro-eks"
-  cluster_version = "1.31"
+  cluster_name    = var.eks_cluster_name
+  cluster_version = var.eks_cluster_version
 
   vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
+  subnet_ids = module.vpc.public_subnets
 
   cluster_endpoint_private_access      = false
   cluster_endpoint_public_access       = true
   cluster_endpoint_public_access_cidrs = ["${chomp(data.http.myip.response_body)}/32"]
 
+  # Adds the current caller identity as an administrator via cluster access entry
+  enable_cluster_creator_admin_permissions = true
+
+  # Cluster addons
+  cluster_addons = {
+    vpc-cni = {}
+    kube-proxy = {}
+    coredns = {}
+    metrics-server = {}
+  }
+
+  # EKS Managed Node group(s)
+  eks_managed_node_group_defaults = {
+    ami_type       = "AL2023_x86_64_STANDARD"
+    instance_types = ["t3.micro", "t2.micro"]
+
+    tags = {
+      Name = "cndro-eks-nodes"
+    }
+  }
+
+  eks_managed_node_groups = {
+    # Node group for x86_64 architecture
+    eks_nodes = {
+      min_size         = 1
+      max_size         = 9
+      desired_capacity = 3
+    }
+    # Node group for ARM64 architecture
+    # arm64_nodes = {
+    #   ami_type         = "AL2023_ARM_64_STANDARD"
+    #   instance_types   = ["t4g.micro", "t4g.small"]
+    #   min_size         = 1
+    #   max_size         = 3
+    #   desired_capacity = 1
+    # }
+  }
+
   cluster_tags = {
-    Name = "cndro-eks"
+    Name = var.eks_cluster_name
   }
 
   tags = var.tags

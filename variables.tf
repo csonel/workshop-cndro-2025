@@ -20,8 +20,10 @@ variable "tags" {
   description = "Tags to apply to all resources"
 
   default = {
-    Terraform = "true"
-    Project   = "Cloud Native Days Romania 2025"
+    Terraform   = "true"
+    Project     = "Cloud Native Days Romania 2025"
+    Environment = "Dev"
+    Service     = "EKS"
   }
 }
 
@@ -30,18 +32,19 @@ variable "availability_zones" {
   description = "List of availability zones to use for the VPC"
 }
 
-variable "private_subnets" {
-  type        = list(string)
-  description = "List of private subnets to create in the VPC"
-}
-
-variable "database_subnets" {
-  type        = list(string)
-  description = "List of database subnets to create in the VPC"
-}
-
 variable "public_subnets" {
   type        = list(string)
   description = "List of public subnets to create in the VPC"
 }
 
+variable "eks_cluster_name" {
+  type        = string
+  description = "Name of the EKS cluster"
+  default     = "cndro-eks"
+}
+
+variable "eks_cluster_version" {
+  type        = string
+  description = "Version of the EKS cluster"
+  default     = "1.31"
+}
