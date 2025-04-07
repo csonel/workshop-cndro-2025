@@ -31,6 +31,8 @@ resource "aws_budgets_budget" "cost" {
       subscriber_email_addresses = [local.email_address]
     }
   }
+
+  tags = var.tags
 }
 
 ################################################################################
@@ -64,6 +66,7 @@ data "http" "myip" {
 resource "aws_key_pair" "eks_nodes_remote_access" {
   key_name   = "cndro-key"
   public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHTjIfMvcfzjx0VwBMLrqA6g6g/wKqVUj4dNsQgHuBE9"
+  tags       = var.tags
 }
 
 module "eks" {
