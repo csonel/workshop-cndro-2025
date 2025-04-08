@@ -86,7 +86,7 @@ module "eks" {
 
   # EKS Managed Node group(s)
   eks_managed_node_group_defaults = {
-    ami_type                   = "AL2023_x86_64_STANDARD"
+    ami_type                   = "BOTTLEROCKET_x86_64"
     instance_types             = ["t3.micro", "t2.micro"]
     use_custom_launch_template = false
 
@@ -112,7 +112,7 @@ module "eks" {
     }
     # Node group for ARM64 architecture
     # arm64_nodes = {
-    #   ami_type       = "AL2023_ARM_64_STANDARD"
+    #   ami_type       = "BOTTLEROCKET_ARM_64"
     #   instance_types = ["t4g.micro", "t4g.small"]
     #   min_size       = 1
     #   max_size       = 3
