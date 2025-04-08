@@ -31,8 +31,6 @@ resource "aws_budgets_budget" "cost" {
       subscriber_email_addresses = [local.email_address]
     }
   }
-
-  tags = var.tags
 }
 
 ################################################################################
@@ -52,8 +50,6 @@ module "vpc" {
   vpc_tags = {
     Name = "cndro-vpc"
   }
-
-  tags = var.tags
 }
 
 ################################################################################
@@ -61,12 +57,6 @@ module "vpc" {
 ################################################################################
 data "http" "myip" {
   url = "http://ipv4.icanhazip.com"
-}
-
-resource "aws_key_pair" "eks_nodes_remote_access" {
-  key_name   = "cndro-key"
-  public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHTjIfMvcfzjx0VwBMLrqA6g6g/wKqVUj4dNsQgHuBE9"
-  tags       = var.tags
 }
 
 module "eks" {
@@ -100,8 +90,12 @@ module "eks" {
     instance_types             = ["t3.micro", "t2.micro"]
     use_custom_launch_template = false
 
-    remote_access = {
-      ec2_ssh_key = aws_key_pair.eks_nodes_remote_access.key_name
+    schedules = {
+      "Zero-Workers" = {
+        start_time   = "2025-05-05T13:10:00Z"
+        min_size     = 0
+        desired_size = 0
+      }
     }
 
     tags = {
@@ -129,6 +123,4 @@ module "eks" {
   cluster_tags = {
     Name = var.eks_cluster_name
   }
-
-  tags = var.tags
 }

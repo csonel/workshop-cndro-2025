@@ -4,6 +4,11 @@ variable "region" {
   default     = "eu-central-1"
 }
 
+variable "terraform_state_bucket" {
+  type        = string
+  description = "S3 bucket for storing Terraform state (needs to be created before running this code)"
+}
+
 variable "enable_budget" {
   type        = bool
   description = "Enable budget notifications"
@@ -13,18 +18,6 @@ variable "enable_budget" {
 variable "email_address" {
   type        = string
   description = "Please enter your valid email address\nEmail address will be used to receive budget notifications"
-}
-
-variable "tags" {
-  type        = map(string)
-  description = "Tags to apply to all resources"
-
-  default = {
-    Terraform   = "true"
-    Project     = "Cloud Native Days Romania 2025"
-    Environment = "Dev"
-    Service     = "EKS"
-  }
 }
 
 variable "availability_zones" {
