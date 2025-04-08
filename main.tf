@@ -112,6 +112,7 @@ module "eks" {
       "Zero-Workers" = {
         start_time   = "2025-05-05T13:10:00Z"
         min_size     = 0
+        max_size     = 0
         desired_size = 0
       }
     }
