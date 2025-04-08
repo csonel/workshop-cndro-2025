@@ -9,6 +9,6 @@ output "aws_region" {
 }
 
 output "eks_endpoint" {
-  description = "EKS Endpoint for EKS control plane."
+  description = "EKS Endpoint for EKS control plane"
   value       = module.eks.cluster_endpoint
 }

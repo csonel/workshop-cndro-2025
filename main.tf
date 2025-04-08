@@ -56,7 +56,7 @@ module "vpc" {
 # Kubernetes Cluster
 ################################################################################
 data "http" "myip" {
-  url = "http://ipv4.icanhazip.com"
+  url = "https://ipv4.icanhazip.com"
 }
 
 module "eks" {
@@ -79,7 +79,9 @@ module "eks" {
   # Cluster addons
   cluster_addons = {
     vpc-cni = {}
-    kube-proxy = {}
+    kube-proxy = {
+      addon_version = "v1.31.3-eksbuild.2"
+    }
     coredns = {}
     metrics-server = {}
   }
@@ -123,4 +125,12 @@ module "eks" {
   cluster_tags = {
     Name = var.eks_cluster_name
   }
+}
+
+resource "null_resource" "generate_kubeconfig" {
+  provisioner "local-exec" {
+    command = "aws eks --region ${var.region} update-kubeconfig --name ${module.eks.cluster_name} --profile amcloud --no-verify-ssl"
+  }
+
+  depends_on = [module.eks]
 }
