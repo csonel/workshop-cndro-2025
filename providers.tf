@@ -11,9 +11,9 @@ terraform {
     }
   }
   backend "s3" {
-    bucket       = var.terraform_state_bucket
+    bucket       = "cndro-terraform"
     key          = "terraform.tfstate"
-    region       = var.region
+    region       = "eu-central-1"
     profile      = "amcloud"
     use_lockfile = true
   }
