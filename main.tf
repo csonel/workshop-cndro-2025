@@ -82,8 +82,24 @@ module "eks" {
     kube-proxy = {
       addon_version = "v1.31.3-eksbuild.2"
     }
-    coredns = {}
-    metrics-server = {}
+    coredns = {
+      configuration_values = jsonencode({
+        replicaCount = 1
+        resources = {
+          requests = {
+            cpu    = "50m"
+            memory = "25Mi"
+          }
+          limits = {
+            cpu    = "50m"
+            memory = "25Mi"
+          }
+        }
+      })
+    }
+    metrics-server = {
+      configuration_values = jsonencode({replicaCount = 1})
+    }
   }
 
   # EKS Managed Node group(s)
