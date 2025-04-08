@@ -98,7 +98,7 @@ module "eks" {
       })
     }
     metrics-server = {
-      configuration_values = "{replicaCount = 1}"
+      configuration_values = "{\"replicas\": 1}"
     }
   }
 
