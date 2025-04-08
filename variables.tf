@@ -4,11 +4,6 @@ variable "region" {
   default     = "eu-central-1"
 }
 
-variable "terraform_state_bucket" {
-  type        = string
-  description = "S3 bucket for storing Terraform state (needs to be created before running this code)"
-}
-
 variable "enable_budget" {
   type        = bool
   description = "Enable budget notifications"
