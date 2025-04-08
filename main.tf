@@ -107,8 +107,8 @@ module "eks" {
     # Node group for x86_64 architecture
     eks_nodes = {
       min_size     = 1
-      max_size     = 3
-      desired_size = 1
+      max_size     = 9
+      desired_size = 3
     }
     # Node group for ARM64 architecture
     # arm64_nodes = {
