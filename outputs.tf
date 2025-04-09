@@ -3,7 +3,7 @@ output "aws_region" {
   value       = var.region
 }
 
-output "eks_clsuter_autoscaler_role_arn" {
+output "eks_cluster_autoscaler_role_arn" {
   description = "EKS Cluster Autoscaler Role ARN"
   value       = var.enable_eks_cluster_autoscaler ? aws_iam_role.eks_cluster_autoscaler[0].arn : "EKS Cluster Autoscaler is not enabled"
 }
