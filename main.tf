@@ -108,15 +108,6 @@ module "eks" {
     instance_types             = ["t3.micro", "t2.micro"]
     use_custom_launch_template = false
 
-    schedules = {
-      "Zero-Workers" = {
-        start_time   = "2025-05-05T13:10:00Z"
-        min_size     = 0
-        max_size     = 0
-        desired_size = 0
-      }
-    }
-
     tags = {
       Name = "cndro-eks-nodes"
     }

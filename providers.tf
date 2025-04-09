@@ -25,7 +25,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Terraform   = "true"
+      managed-by  = "terraform"
       Project     = "Cloud Native Days Romania 2025"
       Environment = "Dev"
       Service     = "EKS"
