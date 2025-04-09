@@ -39,3 +39,4 @@ terraform.rc
 # Other
 .idea
 .DS_Store
+autoscaling/cluster-autoscaler.yml

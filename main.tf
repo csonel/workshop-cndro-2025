@@ -108,6 +108,10 @@ module "eks" {
     instance_types             = ["t3.micro", "t2.micro"]
     use_custom_launch_template = false
 
+    labels = {
+      "managed-by" = "eks"
+    }
+
     tags = {
       Name = "cndro-eks-nodes"
     }
@@ -139,6 +143,97 @@ resource "null_resource" "generate_kubeconfig" {
   provisioner "local-exec" {
     command = "aws eks --region ${var.region} update-kubeconfig --name ${module.eks.cluster_name} --profile amcloud --no-verify-ssl"
   }
+
+  depends_on = [module.eks]
+}
+
+####################################################################
+#IAM Role for Cluster Autoscaler
+####################################################################
+resource "aws_iam_policy" "eks_cluster_autoscaler" {
+  count = var.enable_eks_cluster_autoscaler ? 1 : 0
+
+  name        = "${module.eks.cluster_name}-cluster-autoscaler"
+  description = "IAM Policy for cluster-autoscaler operator"
+  path        = "/"
+
+  policy = jsonencode(
+    {
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Effect = "Allow"
+          Action = [
+            "eks:DescribeNodegroup",
+            "ec2:GetInstanceTypesFromInstanceRequirements",
+            "ec2:DescribeLaunchTemplateVersions",
+            "ec2:DescribeInstanceTypes",
+            "ec2:DescribeImages",
+            "autoscaling:DescribeTags",
+            "autoscaling:DescribeScalingActivities",
+            "autoscaling:DescribeLaunchConfigurations",
+            "autoscaling:DescribeAutoScalingInstances",
+            "autoscaling:DescribeAutoScalingGroups",
+          ]
+          Resource = "*"
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "autoscaling:UpdateAutoScalingGroup",
+            "autoscaling:TerminateInstanceInAutoScalingGroup",
+            "autoscaling:SetDesiredCapacity",
+          ]
+          Resource = "*"
+          Condition = {
+            StringEqualsIfExists = {
+              "autoscaling:ResourceTag/kubernetes.io/ckuster/${module.eks.cluster_name}" = "owned"
+            }
+          }
+        },
+      ]
+    }
+  )
+
+  depends_on = [module.eks]
+}
+
+resource "aws_iam_role" "eks_cluster_autoscaler" {
+  count = var.enable_eks_cluster_autoscaler ? 1 : 0
+
+  name        = "${module.eks.cluster_name}-cluster-autoscaler"
+  description = "IRSA for cluster-autoscaler operator"
+  path        = "/"
+
+  assume_role_policy = jsonencode(
+    {
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Effect = "Allow"
+          Principal = {
+            Federated = module.eks.oidc_provider_arn
+          }
+          Action = "sts:AssumeRoleWithWebIdentity"
+          Condition = {
+            StringEquals = {
+              "${replace(module.eks.oidc_provider_arn, "/^(.*provider/)/", "")}:aud" = "sts.amazonaws.com"
+              "${replace(module.eks.oidc_provider_arn, "/^(.*provider/)/", "")}:sub" = "system:serviceaccount:kube-system:cluster-autoscaler-sa"
+            }
+          }
+        },
+      ]
+    }
+  )
+
+  depends_on = [module.eks]
+}
+
+resource "aws_iam_role_policy_attachment" "eks_cluster_autoscaler" {
+  count = var.enable_eks_cluster_autoscaler ? 1 : 0
+
+  policy_arn = aws_iam_policy.eks_cluster_autoscaler[0].arn
+  role       = aws_iam_role.eks_cluster_autoscaler[0].name
 
   depends_on = [module.eks]
 }

@@ -36,3 +36,9 @@ variable "eks_cluster_version" {
   description = "Version of the EKS cluster"
   default     = "1.31"
 }
+
+variable "enable_eks_cluster_autoscaler" {
+  type        = bool
+  description = "Create EKS Cluster Autoscaler role and policy"
+  default     = true
+}
