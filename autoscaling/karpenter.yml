@@ -1,0 +1,46 @@
+# This is the same nodegroup configuration as the one in the EKS console.
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    metadata:
+      labels:
+        managed-by: karpenter
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      requirements:
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["t3.micro", "t2.micro"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: karpenter.sh/capacity-type # If not included, the webhook for the AWS cloud provider will default to on-demand
+          operator: In
+          values: ["on-demand"]
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  role: cndro_eks_default-eks-node-group
+  amiSelectorTerms:
+    - alias: bottlerocket@latest
+  subnetSelectorTerms:
+    - tags:
+        kubernetes.io/cluster/cndro-eks: owned
+  securityGroupSelectorTerms:
+    - tags:
+        kubernetes.io/cluster/cndro-eks: owned
+  tags:
+    managed-by: "karpenter"
+    Project: "Cloud Native Days Romania 2025"
+    Environment: "Dev"
+    Service: "EKS"

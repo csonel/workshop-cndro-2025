@@ -130,7 +130,31 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
    and CA to scale down the nodes. You should also get out of the load testing application by pressing `Ctrl+D` or typing `exit`.
 
 6. **Migrate from CA to Karpenter**
-   - Install Karpenter
+   - Install Karpenter. For that, we will need to run the following commands:
+     ```bash
+     export CLUSTER_NAME=$(terraform output -raw eks_cluster_name)
+     export CLUSTER_ENDPOINT=$(terraform output -raw eks_cluster_endpoint)
+     export KARPENTER_IAM_ROLE_ARN=$(terraform output -raw karpenter_role_arn)
+     export KARPENTER_SERVICE_ACCOUNT_NAME=$(terraform output -raw karpenter_service_account_name)
+     export KARPENTER_NAMESPACE=$(terraform output -raw karpenter_namespace)
+     export KARPENTER_INTERUPTION_QUEUE=$(terraform output -raw karpenter_interuption_queue_name)
+     export KARPENTER_VERSION="1.3.3"
+     
+     helm install karpenter oci://public.ecr.aws/karpenter/karpenter --version ${KARPENTER_VERSION} \
+        --namespace ${KARPENTER_NAMESPACE} --create-namespace \
+        --set serviceAccount.name=${KARPENTER_SERVICE_ACCOUNT_NAME} \
+        --set serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn=${KARPENTER_IAM_ROLE_ARN} \
+        --set settings.clusterName=${CLUSTER_NAME} \
+        --set settings.clusterEndpoint=${CLUSTER_ENDPOINT} \
+        --set settings.interruptionQueue=${KARPENTER_INTERUPTION_QUEUE} \
+        --set settings.featureGates.spotToSpotConsolidation=true \
+        --set controller.resources.requests.cpu=100m \
+        --set controller.resources.requests.memory=128Mi \
+        --set controller.resources.limits.cpu=500m \
+        --set controller.resources.limits.memory=500Mi \
+        --set replicas=1 \
+        --wait
+     ```
    - Remove Cluster Autoscaler from our EKS cluster. Uninstall CA by running the following command:
      ```bash
      kubectl delete -f autoscaling/cluster-autoscaler.yml
@@ -163,3 +187,78 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
      ```
    - You will need to manually remove the S3 bucket created to store terraform stack.
 
+## External Resources
+- [AWS EKS](https://aws.amazon.com/eks/)
+- [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md)
+- [Karpenter](https://karpenter.sh/docs/)
+
+
+# Terraform Code Documentation
+<!-- BEGIN_TF_DOCS -->
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.83.0 |
+| <a name="requirement_http"></a> [http](#requirement\_http) | 3.4.5 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.83.1 |
+| <a name="provider_http"></a> [http](#provider\_http) | 3.4.5 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.3 |
+
+## Modules
+
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | ~> 20.31 |
+| <a name="module_karpenter"></a> [karpenter](#module\_karpenter) | terraform-aws-modules/eks/aws//modules/karpenter | n/a |
+| <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | 5.19.0 |
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [aws_budgets_budget.cost](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/budgets_budget) | resource |
+| [aws_iam_policy.eks_cluster_autoscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_role.eks_cluster_autoscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.eks_cluster_autoscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [null_resource.generate_kubeconfig](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [http_http.myip](https://registry.terraform.io/providers/hashicorp/http/3.4.5/docs/data-sources/http) | data source |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of availability zones to use for the VPC | `list(string)` | n/a | yes |
+| <a name="input_eks_cluster_name"></a> [eks\_cluster\_name](#input\_eks\_cluster\_name) | Name of the EKS cluster | `string` | `"cndro-eks"` | no |
+| <a name="input_eks_cluster_version"></a> [eks\_cluster\_version](#input\_eks\_cluster\_version) | Version of the EKS cluster | `string` | `"1.31"` | no |
+| <a name="input_email_address"></a> [email\_address](#input\_email\_address) | Please enter your valid email address<br/>Email address will be used to receive budget notifications | `string` | n/a | yes |
+| <a name="input_enable_budget"></a> [enable\_budget](#input\_enable\_budget) | Enable budget notifications | `bool` | `true` | no |
+| <a name="input_enable_eks_cluster_autoscaler"></a> [enable\_eks\_cluster\_autoscaler](#input\_enable\_eks\_cluster\_autoscaler) | Create EKS Cluster Autoscaler role and policy | `bool` | `true` | no |
+| <a name="input_enable_karpenter"></a> [enable\_karpenter](#input\_enable\_karpenter) | Create Karpenter role and policy | `bool` | `false` | no |
+| <a name="input_karpenter_namespace"></a> [karpenter\_namespace](#input\_karpenter\_namespace) | Karpenter namespace | `string` | `"karpenter"` | no |
+| <a name="input_karpenter_service_account"></a> [karpenter\_service\_account](#input\_karpenter\_service\_account) | Karpenter service account | `string` | `"karpenter"` | no |
+| <a name="input_karpenter_use_spot_instances"></a> [karpenter\_use\_spot\_instances](#input\_karpenter\_use\_spot\_instances) | Use spot instances in Karpenter | `bool` | `false` | no |
+| <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | List of public subnets to create in the VPC | `list(string)` | n/a | yes |
+| <a name="input_region"></a> [region](#input\_region) | AWS region to deploy resources in | `string` | `"eu-central-1"` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_aws_region"></a> [aws\_region](#output\_aws\_region) | AWS region where the resources are deployed |
+| <a name="output_eks_cluster_autoscaler_role_arn"></a> [eks\_cluster\_autoscaler\_role\_arn](#output\_eks\_cluster\_autoscaler\_role\_arn) | EKS Cluster Autoscaler Role ARN |
+| <a name="output_eks_cluster_endpoint"></a> [eks\_cluster\_endpoint](#output\_eks\_cluster\_endpoint) | EKS Endpoint for EKS control plane |
+| <a name="output_eks_cluster_name"></a> [eks\_cluster\_name](#output\_eks\_cluster\_name) | EKS Cluster Name |
+| <a name="output_eks_kubeconfig_command"></a> [eks\_kubeconfig\_command](#output\_eks\_kubeconfig\_command) | Command to configure kubectl to use the EKS cluster |
+| <a name="output_karpenter_interuption_queue_name"></a> [karpenter\_interuption\_queue\_name](#output\_karpenter\_interuption\_queue\_name) | Karpenter Interruption Queue Name |
+| <a name="output_karpenter_namespace"></a> [karpenter\_namespace](#output\_karpenter\_namespace) | Karpenter Namespace |
+| <a name="output_karpenter_role_arn"></a> [karpenter\_role\_arn](#output\_karpenter\_role\_arn) | Karpenter Role ARN |
+| <a name="output_karpenter_service_account_name"></a> [karpenter\_service\_account\_name](#output\_karpenter\_service\_account\_name) | Karpenter Service Account Name |
+| <a name="output_my_ip_address"></a> [my\_ip\_address](#output\_my\_ip\_address) | My public IP address |
+<!-- END_TF_DOCS -->

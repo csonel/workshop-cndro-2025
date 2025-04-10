@@ -47,6 +47,10 @@ module "vpc" {
   public_subnets          = var.public_subnets
   map_public_ip_on_launch = true
 
+  public_subnet_tags = {
+    "kubernetes.io/cluster/${var.eks_cluster_name}": "owned"
+  }
+
   vpc_tags = {
     Name = "cndro-vpc"
   }
@@ -104,28 +108,33 @@ module "eks" {
 
   # EKS Managed Node group(s)
   eks_managed_node_group_defaults = {
-    ami_type                   = "BOTTLEROCKET_x86_64"
-    instance_types             = ["t3.micro", "t2.micro"]
-    use_custom_launch_template = false
+    ami_type                        = "BOTTLEROCKET_x86_64"
+    instance_types                  = ["t3.micro", "t2.micro"]
+    use_custom_launch_template      = false
+    use_name_prefix                 = false
+    iam_role_use_name_prefix        = false
+    launch_template_use_name_prefix = false
 
     labels = {
       "managed-by" = "eks"
     }
 
     tags = {
-      Name = "cndro-eks-nodes"
+      Project     = "Cloud Native Days Romania 2025"
+      Environment = "Dev"
+      Service     = "EKS"
     }
   }
 
   eks_managed_node_groups = {
     # Node group for x86_64 architecture
-    eks_nodes = {
+    cndro_eks_default = {
       min_size     = 1
       max_size     = 9
       desired_size = 3
     }
     # Node group for ARM64 architecture
-    # arm64_nodes = {
+    # cndro_eks_arm64 = {
     #   ami_type       = "BOTTLEROCKET_ARM_64"
     #   instance_types = ["t4g.micro", "t4g.small"]
     #   min_size       = 1
@@ -148,7 +157,7 @@ resource "null_resource" "generate_kubeconfig" {
 }
 
 ####################################################################
-#IAM Role for Cluster Autoscaler
+# IAM Role for Cluster Autoscaler
 ####################################################################
 resource "aws_iam_policy" "eks_cluster_autoscaler" {
   count = var.enable_eks_cluster_autoscaler ? 1 : 0
@@ -236,4 +245,32 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_autoscaler" {
   role       = aws_iam_role.eks_cluster_autoscaler[0].name
 
   depends_on = [module.eks]
+}
+
+######################################################################
+# Karpenter prerequisites (IAM Role, SQS, CloudWatch Event Rule)
+######################################################################
+module "karpenter" {
+  count = var.enable_karpenter ? 1 : 0
+
+  source = "terraform-aws-modules/eks/aws//modules/karpenter"
+
+  cluster_name             = module.eks.cluster_name
+  create_node_iam_role     = false
+  node_iam_role_arn        = module.eks.eks_managed_node_groups["cndro_eks_default"].iam_role_arn
+
+  # IAM Role for Service Account (IRSA)
+  iam_role_use_name_prefix        = false
+  iam_role_name                   = "cndro-eks-karpenter"
+  enable_v1_permissions           = true
+  enable_pod_identity             = false
+  enable_irsa                     = true
+  irsa_oidc_provider_arn          = module.eks.oidc_provider_arn
+  irsa_namespace_service_accounts = ["${var.karpenter_namespace}:${var.karpenter_service_account}"]
+
+  # Since the node group role will already have an access entry
+  create_access_entry = false
+
+  # Using spot instances
+  enable_spot_termination = var.karpenter_use_spot_instances
 }

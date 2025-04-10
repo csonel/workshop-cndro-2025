@@ -42,3 +42,27 @@ variable "enable_eks_cluster_autoscaler" {
   description = "Create EKS Cluster Autoscaler role and policy"
   default     = true
 }
+
+variable "enable_karpenter" {
+  type        = bool
+  description = "Create Karpenter role and policy"
+  default     = false
+}
+
+variable "karpenter_namespace" {
+  type        = string
+  description = "Karpenter namespace"
+  default     = "karpenter"
+}
+
+variable "karpenter_service_account" {
+  type        = string
+  description = "Karpenter service account"
+  default     = "karpenter"
+}
+
+variable "karpenter_use_spot_instances" {
+  type        = bool
+  description = "Use spot instances in Karpenter"
+  default     = false
+}
