@@ -5,22 +5,22 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
 
 1. [AWS Account](https://aws.amazon.com/free)
 2. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) with the following configuration:
-   - Create a profile called `amcloud` with the following command:
+   - Create a profile called `cndro2025` with the following command:
      ```bash
-     aws configure --profile amcloud
+     aws configure --profile cndro2025
      ```
    - Enter the following details when prompted:
      - AWS Access Key ID: `<AWS_ACCESS_KEY_ID>`
      - AWS Secret Access Key: `<AWS_SECRET_ACCESS_KEY>`
      - Default region name: `eu-central-1`
      - Default output format: `text`
-   - The configuration will look like this in `~/.aws/config`: 
+   - The configuration will look like this in `~/.aws/config`:
      ```ini
-     [profile amcloud]
+     [profile cndro2025]
      region = eu-central-1
      output = text
      ```
-3. [AWS S3 Bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-bucket.html) for storing terraform state. 
+3. [AWS S3 Bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-bucket.html) for storing terraform state.
    It can be created using the AWS CLI with the following command:
    ```bash
    aws s3 create-bucket --bucket <BUCKET_NAME> --region <REGION>
@@ -31,7 +31,7 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
 
 ## Workshop Steps
 
-1. **Create the EKS Cluster**: 
+1. **Create the EKS Cluster**:
    - Navigate to the root directory and run the following command:
      ```bash
      terraform init
@@ -45,7 +45,7 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
      ```bash
      kubectl create namespace kube-ops-view
      kubectl apply -k kube-ops-view-deployment
-     
+
      kubectl get pod -n kube-ops-view
      ```
    - This will deploy Kube Ops View in the `kube-ops-view` namespace
@@ -61,7 +61,7 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
      kubectl create deployment php-apache --image=eu.gcr.io/k8s-artifacts-prod/hpa-example
      kubectl set resources deployment php-apache --requests=cpu=200m,memory=128Mi
      kubectl expose deployment php-apache --port=80
-     
+
      kubectl get pod -l app=php-apache
      ```
    - The application is a custom-built image based on the php-apache image. The index.php page performs calculations to generate CPU load.
@@ -69,13 +69,13 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
    - Create an HPA resource. This HPA scales up when CPU exceeds 50% of the allocated container resources
      ```bash
      kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
-     
+
      kubectl get hpa
      ```
      View the HPA using kubectl. You probably will see `<unknown>/50%` for 1-2 minutes and then you should be able to see `0%/50%`
 
 4. **Configure Cluster Autoscaler (CA)**
-   - Prepare your environment for the Cluster Autoscaler. First, we will need to create AWS IAM role to be used by CA. 
+   - Prepare your environment for the Cluster Autoscaler. First, we will need to create AWS IAM role to be used by CA.
    For that, we will need to open `terraform.tfvars` and set the following variables:
      ```hcl
      enable_eks_cluster_autoscaler = true
@@ -89,8 +89,8 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
      export CLUSTER_NAME=$(terraform output -raw eks_cluster_name)
      export AWS_REGION=$(terraform output -raw aws_region)
      export EKS_CLUSTER_AUTOSCALER_IAM_ROLE_ARN=$(terraform output -raw eks_cluster_autoscaler_role_arn)
-     
-     helm repo add autoscaler https://kubernetes.github.io/autoscaler 
+
+     helm repo add autoscaler https://kubernetes.github.io/autoscaler
      helm template cndro autoscaler/cluster-autoscaler \
         --namespace kube-system \
         --set "autoDiscovery.clusterName=$CLUSTER_NAME" \
@@ -106,7 +106,7 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
      ```bash
      kubectl get deployment -n kube-system cndro-aws-cluster-autoscaler
      ```
-     
+
 5. **Test Cluster Autoscaler with HPA**
    - Add some load to our Sample application to trigger the HPA and CA. For that we will use and additional container to generate load.
      ```bash
@@ -139,7 +139,7 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
      export KARPENTER_NAMESPACE=$(terraform output -raw karpenter_namespace)
      export KARPENTER_INTERUPTION_QUEUE=$(terraform output -raw karpenter_interuption_queue_name)
      export KARPENTER_VERSION="1.3.3"
-     
+
      helm install karpenter oci://public.ecr.aws/karpenter/karpenter --version ${KARPENTER_VERSION} \
         --namespace ${KARPENTER_NAMESPACE} --create-namespace \
         --set serviceAccount.name=${KARPENTER_SERVICE_ACCOUNT_NAME} \
@@ -171,7 +171,7 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
      ```bash
      kubectl apply -f autoscaling/karpenter.yml
      ```
-   - Now you can start testing Karpenter autoscaling. You can use the same load generator as before to test Karpenter autoscaling. 
+   - Now you can start testing Karpenter autoscaling. You can use the same load generator as before to test Karpenter autoscaling.
    - You can see the Karpenter logs by running the following command:
      ```bash
      kubectl logs -f -n kube-system deployment/karpenter-controller

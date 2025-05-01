@@ -14,14 +14,14 @@ terraform {
     bucket       = "cndro-terraform"
     key          = "terraform.tfstate"
     region       = "eu-central-1"
-    profile      = "amcloud"
+    profile      = "cndro2025"
     use_lockfile = true
   }
 }
 
 provider "aws" {
   region  = var.region
-  profile = "amcloud"
+  profile = "cndro2025"
 
   default_tags {
     tags = {
