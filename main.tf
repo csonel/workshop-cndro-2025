@@ -150,7 +150,7 @@ module "eks" {
 
 resource "null_resource" "generate_kubeconfig" {
   provisioner "local-exec" {
-    command = "aws eks --region ${var.region} update-kubeconfig --name ${module.eks.cluster_name} --profile amcloud --no-verify-ssl"
+    command = "aws eks --region ${var.region} update-kubeconfig --name ${module.eks.cluster_name} --profile cndro2025 --no-verify-ssl"
   }
 
   depends_on = [module.eks]
