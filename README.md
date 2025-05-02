@@ -44,7 +44,7 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
    - Run the following command to install Kube Ops View:
      ```bash
      kubectl create namespace kube-ops-view
-     kubectl apply -k kube-ops-view-deployment
+     kubectl apply -f ./kube-ops-view-deployment
 
      kubectl get pod -n kube-ops-view
      ```
@@ -174,7 +174,7 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
    - Now you can start testing Karpenter autoscaling. You can use the same load generator as before to test Karpenter autoscaling.
    - You can see the Karpenter logs by running the following command:
      ```bash
-     kubectl logs -f -n kube-system deployment/karpenter-controller
+     kubectl logs -f -n karpenter deployment/karpenter
      ```
    - You can also check the EKS console to see the new nodes being added to the cluster or in the Kube Ops View dashboard.
    - To stop the load generator, you can press `Ctrl+C`. This will stop the load generation and allow the HPA to scale down the pods
