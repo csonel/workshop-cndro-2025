@@ -20,7 +20,7 @@ output "eks_cluster_endpoint" {
 
 output "eks_kubeconfig_command" {
   description = "Command to configure kubectl to use the EKS cluster"
-  value       = "aws eks --region ${var.region} update-kubeconfig --name ${module.eks.cluster_name} --profile amcloud --no-verify-ssl"
+  value       = "aws eks --region ${var.region} update-kubeconfig --name ${module.eks.cluster_name} --profile cndro2025 --no-verify-ssl"
 }
 
 output "karpenter_namespace" {
