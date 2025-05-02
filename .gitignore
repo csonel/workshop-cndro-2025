@@ -35,3 +35,8 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Other
+.idea
+.DS_Store
+autoscaling/cluster-autoscaler.yml
