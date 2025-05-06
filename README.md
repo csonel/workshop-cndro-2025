@@ -23,7 +23,7 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
 3. [AWS S3 Bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-bucket.html) for storing terraform state.
    It can be created using the AWS CLI with the following command:
    ```bash
-   aws s3 create-bucket --bucket <BUCKET_NAME> --region <REGION>
+   aws s3api create-bucket --bucket <BUCKET_NAME> --region <REGION> --profile cndro2025 --create-bucket-configuration LocationConstraint="eu-central-1" --no-verify-ssl
    ```
 4. [Terraform](https://www.terraform.io/downloads.html)
 5. [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
@@ -186,6 +186,9 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
      terraform destroy
      ```
    - You will need to manually remove the S3 bucket created to store terraform stack.
+    ```bash
+    aws s3api delete-bucket --bucket <BUCKET_NAME> --region <REGION> --profile cndro2025Add
+    ```
 
 ## External Resources
 - [AWS EKS](https://aws.amazon.com/eks/)
