@@ -186,9 +186,9 @@ Code used for Cloud Native Days Romania Amazon EKS Autoscaling Workshop
      terraform destroy
      ```
    - You will need to manually remove the S3 bucket created to store terraform stack.
-    ```bash
-    aws s3api delete-bucket --bucket <BUCKET_NAME> --region <REGION> --profile cndro2025Add
-    ```
+     ```bash
+     aws s3api delete-bucket --bucket <BUCKET_NAME> --region <REGION> --profile cndro2025
+     ```
 
 ## External Resources
 - [AWS EKS](https://aws.amazon.com/eks/)
